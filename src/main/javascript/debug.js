@@ -26,8 +26,7 @@
  * THE SOFTWARE.
  *
  * Here is a bookmarket for activating firebuglite and dump the history log:
- * javascript:(function(F,i,r,e,b,u,g,L,I,T,E){if(F.getElementById(b))return;E=F[i+'NS']&&F.documentElement.namespaceURI;E=E?F[i+'NS'](E,'script'):F[i]('script');E[r]('id',b);E[r]('src',I+g);E[r](b,u);E.text=T;(F[e]('head')[0]||F[e]('body')[0]).appendChild(E);E=new%20Image;E[r]('src',I+L);})(document,'createElement','setAttribute','getElementsByTagName','FirebugLite','4','firebug-lite.js','releases/lite/latest/skin/xp/sprite.png','https://getfirebug.com/','{startOpened:true,onLoad:function(){if(window.debug&&debug.setCallback){debug.setCallback(function(b){var a=Array.prototype.slice.call(arguments,1);console[b].apply(window,a);},true)}}}');
- *
+ * javascript:(function(F,i,r,e,b,u,g,L,I,T,E){if(F.getElementById(b))return;E=F[i+'NS']&&F.documentElement.namespaceURI;E=E?F[i+'NS'](E,'script'):F[i]('script');E[r]('id',b);E[r]('src',I+g);E[r](b,u);E.text=T;(F[e]('head')[0]||F[e]('body')[0]).appendChild(E);E=new%20Image;E[r]('src',I+L);})(document,'createElement','setAttribute','getElementsByTagName','FirebugLite','4','firebug-lite.js','releases/lite/latest/skin/xp/sprite.png','https://getfirebug.com/','{startOpened:true,onLoad:function(){if(window.debug&&debug.setCallback){debug.setCallback(function(b){var a=Array.prototype.slice.call(arguments,!!console[b]),b=console[b]||((a[0]=b.toUpperCase())&&console.log);b.apply(console,a);},true)}}}');
  */
 
 var debug = (function(debug, window){
@@ -76,12 +75,12 @@ var debug = (function(debug, window){
 
   idx = log_methods.length;
   while ( --idx >= 0 ) {
-    (function( idx, level, logger ){
+    (function( idx, level, logger, Ulevel, withLevel ){
       /**
        * Call the console equivalent method if available, otherwise call console.log.
        * Adds an entry into the logs array for a future callback that could be specified via
        * <debug.setCallback>.
-       * This function is applied for codetrace(), log(), debug(), info(), warn() and error()
+       * This function is applied for callTrace(), log(), debug(), info(), warn() and error()
        */
       debug[ level ] = function() {
         var args = aps.call( arguments ),
@@ -92,10 +91,12 @@ var debug = (function(debug, window){
 
         if ( !con || !is_level( idx ) ) { return; }
 
+        if( withLevel ) { args = [ Ulevel ].concat( args ); }
+
         (con.firebug || con.firebuglite || con.markTimeline) ? con[ logger ].apply( con, args )
-          : (con.log === print) ? con[ logger ].call(window, args ) // workaround for a consolex issue
+          : (con.log === print) ? con[ logger ].call( window, args ) // workaround for a consolex issue
           : con[ logger ] ? con[ logger ]( args )
-          : con.log( args );
+          : con.log( (withLevel) ? args : [ Ulevel ].concat( args ) );
       };
 
       /**
@@ -106,7 +107,7 @@ var debug = (function(debug, window){
         return is_level(idx);
       };
 
-    })( idx, log_methods[idx], log_methods[Math.min(idx,4)] );
+    })( idx, log_methods[idx], log_methods[Math.min(idx,4)], log_methods[idx].toUpperCase(), idx>4 );
   }
 
   /**
