@@ -66,7 +66,7 @@ var debug = (function(debug, window){
        * timeEnd() and trace().
        */
       debug[ method ] = function() {
-        log_level !== 0 && con && con[ method ]
+        log_level !== 0 && con && con[ method ] && con[ method ].apply
           && con[ method ].apply( con, arguments );
       }
 
