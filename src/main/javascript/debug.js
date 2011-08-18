@@ -33,7 +33,7 @@ var debug = (function(debug, window){
 
   // Some convenient shortcuts.
   var aps = Array.prototype.slice,
-      con = window.console,
+      con, titanium = false,
 
       callback_func,
       callback_force,
@@ -55,6 +55,13 @@ var debug = (function(debug, window){
       // Logs are stored here so that they can be recalled as necessary.
       logs = [];
 
+  try {
+    con = Titanium.API;
+    titanium = true;
+  } catch(e) {
+    con = window.console;
+  }
+  
   while ( --idx >= 0 ) {
     (function( method ){
 
@@ -65,7 +72,7 @@ var debug = (function(debug, window){
        * group(), groupCollapsed(), groupEnd(), profile(), profileEnd(), table(), time(),
        * timeEnd() and trace().
        */
-      debug[ method ] = function() {
+      debug[ method ] = (titanium) ? function() {} : function() {
         log_level !== 0 && con && con[ method ] && con[ method ].apply
           && con[ method ].apply( con, arguments );
       }
@@ -84,19 +91,25 @@ var debug = (function(debug, window){
        */
       debug[ level ] = function() {
         var args = aps.call( arguments ),
-            log_arr = [ level ].concat( args );
+            log_arr = [ level ].concat( args ),
+            argsString = '';
 
         logs.push( log_arr );
         exec_callback( log_arr );
 
         if ( !con || !is_level( idx ) ) { return; }
 
-        if( withLevel ) { args = [ Ulevel ].concat( args ); }
+        if( titanium ) {
+          for(var i=0; i<args.length; i++) {
+            argsString += ' ' + args[i];
+          }
+        } else if( withLevel ) { args = [ Ulevel ].concat( args ); }
 
-        (con.firebug || con.firebuglite || con.markTimeline) ? con[ logger ].apply( con, args )
+        (titanium) ? ((level != 'log' && con[ level ]) ? con[ level ]( argsString ) : con.log( level, argsString ))
+        : ((con.firebug || con.firebuglite || con.markTimeline) ? con[ logger ].apply( con, args )
           : (con.log === print) ? con[ logger ].call( window, args ) // workaround for a consolex issue
           : con[ logger ] ? con[ logger ]( args )
-          : con.log( (withLevel) ? args : [ Ulevel ].concat( args ) );
+          : con.log( (withLevel) ? args : [ Ulevel ].concat( args ) ));
       };
 
       /**
@@ -116,7 +129,7 @@ var debug = (function(debug, window){
    */
   function exec_callback( args ) {
     if ( callback_func && (callback_force || !con || !con.log) ) {
-      callback_func.apply( window, args );
+      callback_func.apply( (titanium) ? Titanium : window, args );
     }
   }
 
@@ -173,7 +186,7 @@ var debug = (function(debug, window){
       i -= typeof args[0] === 'number' ? args.shift() : max;
 
       while ( i < max ) {
-        callback_func.apply( window, logs[i++] );
+        callback_func.apply( (titanium) ? Titanium : window, logs[i++] );
       }
     }
   };
