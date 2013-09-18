@@ -49,7 +49,7 @@ var debug = (function(debug, window){
 
       // Pass these methods through to the console if they exist, otherwise just
       // fail gracefully. These methods are provided for convenience.
-      pass_methods = 'assert clear count dir dirxml exception group groupCollapsed groupEnd profile profileEnd table time timeEnd trace'.split(' '),
+      pass_methods = 'clear count dir dirxml exception group groupCollapsed groupEnd profile profileEnd table time timeEnd trace assert'.split(' '),
       idx = pass_methods.length,
 
       // Logs are stored here so that they can be recalled as necessary.
@@ -58,10 +58,12 @@ var debug = (function(debug, window){
   try {
     con = Titanium.API;
     titanium = true;
+    debug.assert = function(assertion, message) { assertion || con.log( 'assert', 'Assertion failed:'+message ); };
+    idx--;
   } catch(e) {
     con = window.console;
   }
-  
+
   while ( --idx >= 0 ) {
     (function( method ){
 
